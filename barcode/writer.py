@@ -97,6 +97,21 @@ class BaseWriter(object):
         self.text_distance = 5
         self.text_line_distance = 1
         self.center_text = True
+        self.supported_file_types = []
+        self._file_type = None
+
+    @property
+    def file_type(self):
+        return self._file_type
+
+    @file_type.setter
+    def file_type(self, file_type):
+        if file_type in self.supported_file_types:
+            self._file_type = file_type
+        else:
+            raise ValueError(
+                f"file_type '{file_type}' not supported by {self.__class__.__name__}"
+            )
 
     def calculate_size(self, modules_per_line, number_of_lines, dpi=300):
         """Calculates the size of the barcode in pixel.
@@ -237,6 +252,7 @@ class SVGWriter(BaseWriter):
         self._document = None
         self._root = None
         self._group = None
+        self.supported_file_types = ["SVG"]
 
     def _init(self, code):
         width, height = self.calculate_size(len(code[0]), len(code), self.dpi)
@@ -324,10 +340,20 @@ else:
             BaseWriter.__init__(
                 self, self._init, self._paint_module, self._paint_text, self._finish
             )
-            self.format = "PNG"
             self.dpi = 300
             self._image = None
             self._draw = None
+            self.supported_file_types = [
+                "PNG",
+                "BMP",
+                "GIF",
+                "JPEG",
+                "MSP",
+                "PCX",
+                "PNG",
+                "TIFF",
+                "XBM",
+            ]
 
         def _init(self, code):
             size = self.calculate_size(len(code[0]), len(code), self.dpi)
@@ -360,6 +386,6 @@ else:
             return self._image
 
         def save(self, filename, output):
-            filename = "{0}.{1}".format(filename, self.format.lower())
-            output.save(filename, self.format.upper())
+            filename = "{0}.{1}".format(filename, self.file_type.lower())
+            output.save(filename, self.file_type.upper())
             return filename
