@@ -13,7 +13,7 @@ except ImportError:
 
 # No GUI available yet
 QtCore = None
-IMG_FORMATS = ("BMP", "GIF", "JPEG", "MSP", "PCX", "PNG", "TIFF", "XBM")
+FILETYPES = ("SVG", "BMP", "GIF", "JPEG", "MSP", "PCX", "PNG", "TIFF", "XBM")
 
 
 def open_gui(args, parser=None):
@@ -21,24 +21,23 @@ def open_gui(args, parser=None):
 
 
 def list_types(args, parser=None):
-    print("\npyBarcode available barcode formats:")
+    print("\npyBarcode available barcode filetypes:")
     print(", ".join(barcode.PROVIDED_BARCODES))
     print("\n")
-    print("Available image formats")
+    print("Available image filetypes")
     print("Standard: svg")
     if ImageWriter is not None:
-        print("Pillow:", ", ".join(IMG_FORMATS))
+        print("Pillow:", ", ".join(FILETYPES))
     else:
         print("Pillow: disabled")
     print("\n")
 
 
 def create_barcode(args, parser):
-    args.type = args.type.upper()
-    if args.type != "SVG" and args.type not in IMG_FORMATS:
+    file_type = args.file_type.upper()
+    if file_type != "SVG" and file_type not in FILETYPES:
         parser.error(
-            "Unknown type {type}. Try list action for available "
-            "types.".format(type=args.type)
+            f"Unknown type {file_type}. Try list action for available " "types."
         )
 
     args.barcode = args.barcode.lower()
@@ -47,13 +46,14 @@ def create_barcode(args, parser):
             "Unknown barcode {bc}. Try list action for available "
             "barcodes.".format(bc=args.barcode)
         )
-
-    if args.type != "SVG":
-        opts = {"format": args.type}
-        writer = ImageWriter()
+    writer_options = {}
+    if file_type != "SVG":
+        writer = ImageWriter(file_type=file_type)
     else:
-        opts = {"compress": args.compress}
+        writer_options["compress"] = args.compress
         writer = SVGWriter()
+    if args.font_size:
+        writer_options["font_size"] = args.font_size
 
     out = os.path.normpath(os.path.abspath(args.output))
 
@@ -62,7 +62,7 @@ def create_barcode(args, parser):
         code=args.code,
         writer=writer,
         output=out,
-        writer_options=opts,
+        writer_options=writer_options,
         text=args.text,
     )
 
@@ -75,19 +75,22 @@ def main():
         msg.append("Image output disabled (Pillow not found), --type option disabled.")
     else:
         msg.append(
-            "Image output enabled, use --type option to give image "
-            "format (png, jpeg, ...)."
+            "Image output enabled, use --file_type option to give image "
+            "file type (png, jpeg, ...)."
         )
     if QtCore is None:
         msg.append("PyQt not found, gui action disabled.")
     else:
         msg.append("PyQt found. Use gui action to get a simple GUI.")
+
     parser = ArgumentParser(
         description="Create standard barcodes via cli.", epilog=" ".join(msg)
     )
+
     parser.add_argument(
         "-v", "--version", action="version", version="%(prog)s " + version
     )
+
     subparsers = parser.add_subparsers(title="Actions")
     create_parser = subparsers.add_parser(
         "create", help="Create a barcode " "with the given options."
@@ -100,16 +103,25 @@ def main():
         "-c",
         "--compress",
         action="store_true",
-        help="Compress output, only recognized if type is svg.",
+        help="Compress output, only recognized if file type is svg.",
     )
     create_parser.add_argument(
         "-b", "--barcode", help="Barcode to use " "[default: %(default)s]."
     )
-    create_parser.add_argument("--text", help="Text to show under the " "barcode.")
+    create_parser.add_argument(
+        "--text", help="Non-standard text to show under the " "barcode."
+    )
+    create_parser.add_argument(
+        "--font_size",
+        help="Size of the text beneath the barcode.",
+        type=int,
+        default=10,
+    )
     if ImageWriter is not None:
         create_parser.add_argument(
-            "-t", "--type", help="Type of output " "[default: %(default)s]."
+            "-t", "--file_type", help="File type of output " "[default: %(default)s]."
         )
+
     list_parser = subparsers.add_parser(
         "list", help="List available " "image and code types."
     )
@@ -120,9 +132,15 @@ def main():
         )
         gui_parser.set_defaults(func=open_gui)
     create_parser.set_defaults(
-        type="svg", compress=False, func=create_barcode, barcode="code39", text=None
+        file_type="svg",
+        compress=False,
+        func=create_barcode,
+        barcode="code39",
+        text=None,
     )
+
     args = parser.parse_args()
+
     try:
         func = args.func
     except AttributeError:

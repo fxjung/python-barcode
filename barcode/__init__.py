@@ -42,7 +42,7 @@ PROVIDED_BARCODES = list(__BARCODE_MAP)
 PROVIDED_BARCODES.sort()
 
 
-def get(name, code=None, writer=None, options=None):
+def get(name, code=None, writer=None, writer_options=None):
     """Helper method for getting a generator or even a generated code.
 
     :param str name: The name of the type of barcode desired.
@@ -51,11 +51,11 @@ def get(name, code=None, writer=None, options=None):
         is returned.
     :param Writer writer: An alternative writer to use when generating the
         barcode.
-    :param dict options: Aditional options to be passed on to the barcode when
+    :param dict writer_options: Aditional options to be passed on to the barcode when
         generating.
     """
 
-    options = options or {}
+    writer_options = writer_options or {}
     try:
         barcode = __BARCODE_MAP[name.lower()]
     except KeyError:
@@ -65,12 +65,15 @@ def get(name, code=None, writer=None, options=None):
 
     if code is not None:
         try:
-            return barcode(code, writer, **options)
+            bc = barcode(code, writer)
+            bc.writer.set_options(dict(bc.default_writer_options, **writer_options))
+            return bc
+
         except TypeError as e:
             if "unexpected keyword argument" in str(e):
                 print(
                     "ERROR: The selected barcode does not support the "
-                    f"selected options: {options!s}."
+                    f"selected writer_options: {writer_options!s}."
                 )
                 exit(1)
             else:
@@ -86,16 +89,17 @@ def get_class(name):
 def generate(
     name, code, writer=None, output=None, writer_options=None, text=None, pil=False
 ):
-    options = writer_options or {}
-    barcode = get(name, code, writer, options)
+    writer_options = writer_options or {}
+    barcode = get(name=name, code=code, writer=writer, writer_options=writer_options)
 
     if pil:
-        return barcode.render(writer_options, text)
+        return barcode.render(text)
+
     if isinstance(output, str):
-        fullname = barcode.save(output, options, text)
+        fullname = barcode.save(output, text)
         return fullname
     else:
-        barcode.write(output, options, text)
+        barcode.write(output, text)
 
 
 get_barcode = get

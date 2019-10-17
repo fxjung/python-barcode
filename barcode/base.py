@@ -6,11 +6,8 @@ from barcode.writer import SVGWriter
 
 
 class Barcode(object):
-
     name = ""
-
     digits = 0
-
     default_writer = SVGWriter
 
     default_writer_options = {
@@ -45,30 +42,43 @@ class Barcode(object):
         """
         raise NotImplementedError
 
-    def save(self, filename, options=None, text=None):
+    def save(self, filename, text=None):
         """Renders the barcode and saves it in `filename`.
 
         :parameters:
             filename : String
                 Filename to save the barcode in (without filename
                 extension).
-            options : Dict
-                The same as in `self.render`.
             text : str (unicode on Python 2)
                 Text to render under the barcode.
 
         :returns: The full filename with extension.
         :rtype: String
         """
-        if text:
-            output = self.render(options, text)
-        else:
-            output = self.render(options)
-
+        output = self.render(text)
         _filename = self.writer.save(filename, output)
         return _filename
 
-    def write(self, fp, options=None, text=None):
+    def render(self, text=None):
+        """Renders the barcode using `self.writer`.
+
+        :parameters:
+            text : str (unicode on Python 2)
+                Text to render under the barcode.
+
+        :returns: Output of the writers render method.
+        """
+
+        if text is not None:
+            self.writer.text = text
+        elif hasattr(self.writer, "write_text"):
+            self.writer.text = self.get_fullcode()
+
+        code = self.build()
+        raw = self.writer.render(code)
+        return raw
+
+    def write(self, fp, text=None):
         """Renders the barcode and writes it to the file like object
         `fp`.
 
@@ -85,26 +95,3 @@ class Barcode(object):
             output.save(fp, format=self.writer.format)
         else:
             fp.write(output)
-
-    def render(self, writer_options=None, text=None):
-        """Renders the barcode using `self.writer`.
-
-        :parameters:
-            writer_options : Dict
-                Options for `self.writer`, see writer docs for details.
-            text : str (unicode on Python 2)
-                Text to render under the barcode.
-
-        :returns: Output of the writers render method.
-        """
-        options = Barcode.default_writer_options.copy()
-        options.update(writer_options or {})
-        if options["write_text"] or text is not None:
-            if text is not None:
-                options["text"] = text
-            else:
-                options["text"] = self.get_fullcode()
-        self.writer.set_options(options)
-        code = self.build()
-        raw = self.writer.render(code)
-        return raw
