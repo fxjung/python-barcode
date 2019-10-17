@@ -8,9 +8,11 @@ try:
     import Image
     import ImageDraw
     import ImageFont
+
 except ImportError:
     try:
         from PIL import Image, ImageDraw, ImageFont  # lint:ok
+
     except ImportError:
         import logging
 
@@ -92,6 +94,7 @@ class BaseWriter(object):
         self.quiet_zone = 6.5
         self.background = "white"
         self.foreground = "black"
+        self.write_text = True
         self.text = ""
         self.human = ""  # human readable text
         self.text_distance = 5
@@ -253,6 +256,7 @@ class SVGWriter(BaseWriter):
         self._root = None
         self._group = None
         self.supported_file_types = ["SVG"]
+        self.file_type = "SVG"
 
     def _init(self, code):
         width, height = self.calculate_size(len(code[0]), len(code), self.dpi)
@@ -336,7 +340,7 @@ if Image is None:
 else:
 
     class ImageWriter(BaseWriter):
-        def __init__(self):
+        def __init__(self, file_type="PNG"):
             BaseWriter.__init__(
                 self, self._init, self._paint_module, self._paint_text, self._finish
             )
@@ -354,6 +358,7 @@ else:
                 "TIFF",
                 "XBM",
             ]
+            self.file_type = file_type
 
         def _init(self, code):
             size = self.calculate_size(len(code[0]), len(code), self.dpi)

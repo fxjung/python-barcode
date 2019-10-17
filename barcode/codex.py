@@ -41,15 +41,11 @@ class Code39(Barcode):
 
     name = "Code 39"
 
-    def __init__(
-        self, code, writer=None, add_checksum=True, compress=True, format=None
-    ):
+    def __init__(self, code, writer=None, add_checksum=True):
         self.code = code.upper()
         if add_checksum:
             self.code += self.calculate_checksum()
         self.writer = writer or Barcode.default_writer()
-        if format:
-            self.writer.file_type = format
         check_code(self.code, self.name, code39.REF)
 
     def __unicode__(self):
@@ -73,10 +69,11 @@ class Code39(Barcode):
         chars.append(code39.EDGE)
         return [code39.MIDDLE.join(chars)]
 
-    def render(self, writer_options=None, text=None):
-        options = {"module_width": MIN_SIZE, "quiet_zone": MIN_QUIET_ZONE}
-        options.update(writer_options or {})
-        return Barcode.render(self, options, text)
+    def render(self, text=None):
+        self.writer.set_options(
+            {"module_width": MIN_SIZE, "quiet_zone": MIN_QUIET_ZONE}
+        )
+        return Barcode.render(self, text)
 
 
 class PZN7(Code39):
