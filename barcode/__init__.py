@@ -64,7 +64,17 @@ def get(name, code=None, writer=None, options=None):
         )
 
     if code is not None:
-        return barcode(code, writer, **options)
+        try:
+            return barcode(code, writer, **options)
+        except TypeError as e:
+            if "unexpected keyword argument" in str(e):
+                print(
+                    "ERROR: The selected barcode does not support the "
+                    f"selected options: {options!s}."
+                )
+                exit(1)
+            else:
+                raise
     else:
         return barcode
 
@@ -78,6 +88,7 @@ def generate(
 ):
     options = writer_options or {}
     barcode = get(name, code, writer, options)
+
     if pil:
         return barcode.render(writer_options, text)
     if isinstance(output, str):

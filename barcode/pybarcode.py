@@ -40,20 +40,32 @@ def create_barcode(args, parser):
             "Unknown type {type}. Try list action for available "
             "types.".format(type=args.type)
         )
+
     args.barcode = args.barcode.lower()
     if args.barcode not in barcode.PROVIDED_BARCODES:
         parser.error(
             "Unknown barcode {bc}. Try list action for available "
             "barcodes.".format(bc=args.barcode)
         )
+
     if args.type != "SVG":
         opts = {"format": args.type}
         writer = ImageWriter()
     else:
         opts = {"compress": args.compress}
         writer = SVGWriter()
+
     out = os.path.normpath(os.path.abspath(args.output))
-    name = barcode.generate(args.barcode, args.code, writer, out, opts, args.text)
+
+    name = barcode.generate(
+        name=args.barcode,
+        code=args.code,
+        writer=writer,
+        output=out,
+        writer_options=opts,
+        text=args.text,
+    )
+
     print("New barcode saved as {0}.".format(name))
 
 
