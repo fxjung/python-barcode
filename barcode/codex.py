@@ -249,10 +249,11 @@ class Code128(Barcode):
         code += "11"
         return [code]
 
-    def render(self, writer_options=None, text=None):
-        options = {"module_width": MIN_SIZE, "quiet_zone": MIN_QUIET_ZONE}
-        options.update(writer_options or {})
-        return Barcode.render(self, options, text)
+    def render(self, text=None):
+        self.writer.set_options(
+            {"module_width": MIN_SIZE, "quiet_zone": MIN_QUIET_ZONE}
+        )
+        return Barcode.render(self, text)
 
 
 class Gs1_128(Code128):

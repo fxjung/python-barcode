@@ -52,8 +52,9 @@ def create_barcode(args, parser):
     else:
         writer_options["compress"] = args.compress
         writer = SVGWriter()
-    if args.font_size:
-        writer_options["font_size"] = args.font_size
+    writer_options["font_size"] = args.font_size
+    writer_options["text_distance"] = args.text_distance
+    writer_options["module_height"] = args.module_height
 
     out = os.path.normpath(os.path.abspath(args.output))
 
@@ -117,6 +118,19 @@ def main():
         type=int,
         default=10,
     )
+    create_parser.add_argument(
+        "--text_distance",
+        help="Padding between module and text.",
+        type=float,
+        default=5.0,
+    )
+    create_parser.add_argument(
+        "--module_height",
+        help="Height of the barcode module.",
+        type=float,
+        default=15.0,
+    )
+
     if ImageWriter is not None:
         create_parser.add_argument(
             "-t", "--file_type", help="File type of output " "[default: %(default)s]."

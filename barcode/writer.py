@@ -135,7 +135,8 @@ class BaseWriter(object):
         number_of_text_lines = len(self.text.splitlines())
         if self.font_size and self.text:
             height += (
-                pt2mm(self.font_size) / 2 * number_of_text_lines + self.text_distance
+                pt2mm(self.font_size) / (2 * dpi / 200) * number_of_text_lines
+                + self.text_distance
             )
             height += self.text_line_distance * (number_of_text_lines - 1)
         return int(mm2px(width, dpi)), int(mm2px(height, dpi))
@@ -344,7 +345,7 @@ else:
             BaseWriter.__init__(
                 self, self._init, self._paint_module, self._paint_text, self._finish
             )
-            self.dpi = 300
+            self.dpi = 600
             self._image = None
             self._draw = None
             self.supported_file_types = [
